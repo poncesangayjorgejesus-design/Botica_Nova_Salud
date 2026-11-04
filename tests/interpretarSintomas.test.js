@@ -38,3 +38,22 @@ test("No afirmar sintomas negados", () => {
 
   assert.equal(resultado.estado, "aclaracion");
 });
+
+ // PASO 25 - Pruebas de errores ortograficos
+
+const casosConErrores = [
+  ["Me duele la mulela", "Dolor dental"],
+  ["Tengo mucha toz", "Tos"],
+  ["Me duele la bariga", "Dolor abdominal"],
+  ["Estoy con fleemas", "Presencia de flema"]
+];
+
+for (const [consulta, esperado] of casosConErrores) {
+  test(`Reconocer error ortografico: ${consulta}`, () => {
+    const resultado = interpretarSintomas(consulta);
+
+    assert.equal(resultado.estado, "ok");
+    assert.equal(resultado.molestia, esperado);
+    assert.equal(resultado.diagnostico, false);
+  });
+}
