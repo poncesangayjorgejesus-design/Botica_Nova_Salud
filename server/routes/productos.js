@@ -18,6 +18,10 @@ import {
   validarCamposAdicionalesProducto
 } from "../services/validarDatosProducto.js";
 
+import {
+  protegerAdministracion
+} from "../middlewares/protegerAdministracion.js";
+
 const router = express.Router();
 
 // ============================================
@@ -26,6 +30,7 @@ const router = express.Router();
 
 // ============================================
 // GET - LISTAR TODOS LOS PRODUCTOS
+// ACCESO PUBLICO
 // ============================================
 
 router.get("/", async (req, res) => {
@@ -54,6 +59,7 @@ router.get("/", async (req, res) => {
 
 // ============================================
 // GET - OBTENER PRODUCTO POR ID
+// ACCESO PUBLICO
 // ============================================
 
 router.get("/:id", async (req, res) => {
@@ -93,9 +99,10 @@ router.get("/:id", async (req, res) => {
 
 // ============================================
 // POST - REGISTRAR PRODUCTO
+// ACCESO ADMINISTRATIVO PROTEGIDO
 // ============================================
 
-router.post("/", async (req, res) => {
+router.post("/", protegerAdministracion, async (req, res) => {
   try {
 
     // Solo disponible en entorno de demostracion
@@ -119,7 +126,7 @@ router.post("/", async (req, res) => {
       principioActivo
     };
 
-    // Validar nombre, categoria y principio activo
+    // Validar campos principales
     for (const [campo, valor] of Object.entries(campos)) {
 
       if (
@@ -158,8 +165,6 @@ router.post("/", async (req, res) => {
       categoria: categoria.trim(),
       principioActivo: principioActivo.trim(),
 
-      // Precio, stock, presentacion,
-      // concentracion e imagen
       ...validacion.datos
     });
 
@@ -181,9 +186,10 @@ router.post("/", async (req, res) => {
 
 // ============================================
 // PUT - ACTUALIZAR PRODUCTO
+// ACCESO ADMINISTRATIVO PROTEGIDO
 // ============================================
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", protegerAdministracion, async (req, res) => {
   try {
 
     // Solo disponible en entorno de demostracion
@@ -196,7 +202,6 @@ router.put("/:id", async (req, res) => {
 
     const id = Number(req.params.id);
 
-    // Validar identificador
     if (!Number.isSafeInteger(id) || id <= 0) {
       return res.status(400).json({
         estado: "error",
@@ -258,7 +263,6 @@ router.put("/:id", async (req, res) => {
         categoria: categoria.trim(),
         principioActivo: principioActivo.trim(),
 
-        // Nuevos campos validados
         ...validacion.datos
       }
     );
@@ -288,9 +292,10 @@ router.put("/:id", async (req, res) => {
 
 // ============================================
 // DELETE - ELIMINAR PRODUCTO
+// ACCESO ADMINISTRATIVO PROTEGIDO
 // ============================================
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", protegerAdministracion, async (req, res) => {
   try {
 
     // Solo disponible en entorno de demostracion
