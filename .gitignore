@@ -1,0 +1,13 @@
+
+# Dependencias
+node_modules/
+
+# Claves privadas
+.env
+.env.*
+!.env.example
+
+# Archivos temporales
+*.log
+dist/
+coverage/
