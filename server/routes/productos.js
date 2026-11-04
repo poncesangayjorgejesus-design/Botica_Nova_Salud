@@ -121,4 +121,67 @@ router.post("/", (req, res) => {
   });
 });
 
+ // Actualizar un producto por su ID
+router.put("/:id", (req, res) => {
+  // Solo para pruebas locales
+  if (process.env.NODE_ENV === "production") {
+    return res.status(403).json({
+      estado: "error",
+      mensaje: "Edicion de demostracion deshabilitada"
+    });
+  }
+
+  const id = Number(req.params.id);
+
+  // Validar el ID
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    return res.status(400).json({
+      estado: "error",
+      mensaje: "El ID debe ser un numero entero positivo"
+    });
+  }
+
+  // Buscar el producto
+  const producto = productosDemo.find(
+    (item) => item.id === id
+  );
+
+  if (!producto) {
+    return res.status(404).json({
+      estado: "error",
+      mensaje: "Producto no encontrado"
+    });
+  }
+
+  // Obtener los nuevos datos
+  const { nombre, categoria, principioActivo } = req.body ?? {};
+
+  const campos = { nombre, categoria, principioActivo };
+
+  // Validar los campos
+  for (const [campo, valor] of Object.entries(campos)) {
+    if (
+      typeof valor !== "string" ||
+      valor.trim().length < 2 ||
+      valor.trim().length > 120
+    ) {
+      return res.status(400).json({
+        estado: "error",
+        mensaje: `El campo ${campo} debe tener entre 2 y 120 caracteres`
+      });
+    }
+  }
+
+  // Actualizar los datos
+  producto.nombre = nombre.trim();
+  producto.categoria = categoria.trim();
+  producto.principioActivo = principioActivo.trim();
+
+  res.json({
+    estado: "ok",
+    mensaje: "Producto actualizado correctamente",
+    producto
+  });
+});
+
 export default router;
