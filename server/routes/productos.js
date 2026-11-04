@@ -43,4 +43,32 @@ router.get("/", (req, res) => {
   });
 });
 
+ // Obtener un producto por su ID
+router.get("/:id", (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    return res.status(400).json({
+      estado: "error",
+      mensaje: "El ID debe ser un numero entero positivo"
+    });
+  }
+
+  const producto = productosDemo.find(
+    (item) => item.id === id
+  );
+
+  if (!producto) {
+    return res.status(404).json({
+      estado: "error",
+      mensaje: "Producto no encontrado"
+    });
+  }
+
+  res.json({
+    estado: "ok",
+    producto
+  });
+});
+
 export default router;
