@@ -1,7 +1,12 @@
 
 import { productosDemo } from "../data/productosDemo.js";
 
-// Normalizar texto para las búsquedas
+// ============================================
+// NOVA SALUD PRO
+// REPOSITORIO DE PRODUCTOS
+// ============================================
+
+// Normalizar texto para las busquedas
 const normalizar = (texto) => {
   return String(texto ?? "")
     .toLowerCase()
@@ -10,89 +15,148 @@ const normalizar = (texto) => {
     .trim();
 };
 
-// Obtener productos con filtros
+// Campos adicionales del catalogo
+const camposAdicionales = [
+  "precio",
+  "stock",
+  "presentacion",
+  "concentracion",
+  "imagenUrl"
+];
+
+// Preparar los campos adicionales
+const obtenerCamposAdicionales = (
+  datos,
+  productoActual = {}
+) => {
+  const resultado = {};
+
+  for (const campo of camposAdicionales) {
+    if (Object.hasOwn(datos, campo)) {
+      resultado[campo] = datos[campo];
+    } else {
+      resultado[campo] = productoActual[campo] ?? null;
+    }
+  }
+
+  return resultado;
+};
+
+// ============================================
+// GET - LISTAR PRODUCTOS CON FILTROS
+// ============================================
+
 export const listarProductos = async (filtros = {}) => {
   const nombre = normalizar(filtros.nombre);
   const categoria = normalizar(filtros.categoria);
-  const principioActivo = normalizar(filtros.principioActivo);
+  const principioActivo = normalizar(
+    filtros.principioActivo
+  );
 
   return productosDemo.filter((producto) => {
     return (
       normalizar(producto.nombre).includes(nombre) &&
       normalizar(producto.categoria).includes(categoria) &&
-      normalizar(producto.principioActivo).includes(principioActivo)
+      normalizar(producto.principioActivo).includes(
+        principioActivo
+      )
     );
   });
 };
 
-// Obtener un producto por su ID
+// ============================================
+// GET - OBTENER PRODUCTO POR ID
+// ============================================
+
 export const obtenerProductoPorId = async (id) => {
   return productosDemo.find(
     (producto) => producto.id === Number(id)
   ) ?? null;
 };
 
-// Registrar un producto en el repositorio
+// ============================================
+// POST - CREAR PRODUCTO
+// ============================================
+
 export const crearProducto = async (datos) => {
 
-  // Generar un ID para el producto
+  // Generar ID automatico
   const nuevoId = Math.max(
     0,
     ...productosDemo.map((producto) => producto.id)
   ) + 1;
 
-  // Crear el objeto del producto
+  // Crear producto con todos sus campos
   const nuevoProducto = {
     id: nuevoId,
+
     nombre: datos.nombre.trim(),
     categoria: datos.categoria.trim(),
     principioActivo: datos.principioActivo.trim(),
+
+    ...obtenerCamposAdicionales(datos),
+
     demo: true
   };
 
-  // Guardar temporalmente el producto
+  // Guardar en memoria
   productosDemo.push(nuevoProducto);
 
   return nuevoProducto;
 };
 
-// Actualizar un producto en el repositorio
+// ============================================
+// PUT - ACTUALIZAR PRODUCTO
+// ============================================
+
 export const actualizarProducto = async (id, datos) => {
 
-  // Buscar el producto por su ID
+  // Buscar producto existente
   const producto = productosDemo.find(
     (item) => item.id === Number(id)
   );
 
-  // Verificar si existe
   if (!producto) {
     return null;
   }
 
-  // Actualizar sus datos
+  // Actualizar campos principales
   producto.nombre = datos.nombre.trim();
   producto.categoria = datos.categoria.trim();
-  producto.principioActivo = datos.principioActivo.trim();
+  producto.principioActivo =
+    datos.principioActivo.trim();
+
+  // Actualizar campos adicionales
+  // Conserva los valores anteriores si
+  // no se envian en la actualizacion.
+  Object.assign(
+    producto,
+    obtenerCamposAdicionales(datos, producto)
+  );
 
   return producto;
-  
 };
 
- // Eliminar un producto desde el repositorio
+// ============================================
+// DELETE - ELIMINAR PRODUCTO
+// ============================================
+
 export const eliminarProducto = async (id) => {
 
-  // Buscar la posicion del producto
+  // Buscar posicion del producto
   const indice = productosDemo.findIndex(
     (producto) => producto.id === Number(id)
   );
 
-  // Verificar si el producto existe
   if (indice === -1) {
     return null;
   }
 
-  // Eliminar el producto
-  const productoEliminado = productosDemo.splice(indice, 1)[0];
+  // Eliminar producto
+  const productoEliminado = productosDemo.splice(
+    indice,
+    1
+  )[0];
 
   return productoEliminado;
 };
