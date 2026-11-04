@@ -8,23 +8,10 @@ import {
   actualizarProducto
 } from "../repositories/productosRepository.js";
 
-
-
 import { productosDemo } from "../data/productosDemo.js";
 
 const router = express.Router();
 
-// Normalizar texto para buscar sin importar tildes
-const normalizar = (texto) => {
-  return String(texto ?? "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
-};
-
-
- // Obtener productos desde el repositorio
 router.get("/", async (req, res) => {
   try {
     const productos = await listarProductos(req.query);
@@ -36,6 +23,7 @@ router.get("/", async (req, res) => {
       total: productos.length,
       origen: "Datos de demostracion"
     });
+
   } catch (error) {
     console.error("Error al consultar productos:", error);
 
@@ -47,13 +35,10 @@ router.get("/", async (req, res) => {
 });
 
 
-
- // Consultar un producto por ID desde el repositorio
 router.get("/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
 
-    // Validar el identificador
     if (!Number.isSafeInteger(id) || id <= 0) {
       return res.status(400).json({
         estado: "error",
@@ -61,7 +46,6 @@ router.get("/:id", async (req, res) => {
       });
     }
 
-    // Consultar el repositorio
     const producto = await obtenerProductoPorId(id);
 
     if (!producto) {
@@ -87,11 +71,9 @@ router.get("/:id", async (req, res) => {
 });
 
 
-
- // Registrar productos utilizando el repositorio
 router.post("/", async (req, res) => {
   try {
-    // Solo para pruebas locales
+    // Disponible solo para pruebas locales
     if (process.env.NODE_ENV === "production") {
       return res.status(403).json({
         estado: "error",
@@ -99,12 +81,15 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Obtener datos del producto
     const { nombre, categoria, principioActivo } = req.body ?? {};
 
-    // Validar los campos obligatorios
-    const campos = { nombre, categoria, principioActivo };
+    const campos = {
+      nombre,
+      categoria,
+      principioActivo
+    };
 
+    // Validar campos obligatorios
     for (const [campo, valor] of Object.entries(campos)) {
       if (
         typeof valor !== "string" ||
@@ -118,7 +103,7 @@ router.post("/", async (req, res) => {
       }
     }
 
-    // Registrar mediante el repositorio
+    // Registrar utilizando el repositorio
     const nuevoProducto = await crearProducto({
       nombre,
       categoria,
@@ -142,12 +127,9 @@ router.post("/", async (req, res) => {
 });
 
 
- // Actualizar un producto por su ID
-
-// Actualizar un producto utilizando el repositorio
 router.put("/:id", async (req, res) => {
   try {
-    // Solo para pruebas locales
+    // Disponible solo para pruebas locales
     if (process.env.NODE_ENV === "production") {
       return res.status(403).json({
         estado: "error",
@@ -155,9 +137,9 @@ router.put("/:id", async (req, res) => {
       });
     }
 
-    // Validar el ID del producto
     const id = Number(req.params.id);
 
+    // Validar identificador
     if (!Number.isSafeInteger(id) || id <= 0) {
       return res.status(400).json({
         estado: "error",
@@ -165,10 +147,14 @@ router.put("/:id", async (req, res) => {
       });
     }
 
-    // Obtener los datos enviados
+    // Obtener los nuevos datos
     const { nombre, categoria, principioActivo } = req.body ?? {};
 
-    const campos = { nombre, categoria, principioActivo };
+    const campos = {
+      nombre,
+      categoria,
+      principioActivo
+    };
 
     // Validar campos
     for (const [campo, valor] of Object.entries(campos)) {
@@ -184,7 +170,7 @@ router.put("/:id", async (req, res) => {
       }
     }
 
-    // Actualizar mediante el repositorio
+    // Actualizar utilizando el repositorio
     const productoActualizado = await actualizarProducto(id, {
       nombre,
       categoria,
@@ -215,78 +201,56 @@ router.put("/:id", async (req, res) => {
 });
 
 
-  // Obtener los nuevos datos
-  const { nombre, categoria, principioActivo } = req.body ?? {};
-
-  const campos = { nombre, categoria, principioActivo };
-
-  // Validar los campos
-  for (const [campo, valor] of Object.entries(campos)) {
-    if (
-      typeof valor !== "string" ||
-      valor.trim().length < 2 ||
-      valor.trim().length > 120
-    ) {
-      return res.status(400).json({
+router.delete("/:id", (req, res) => {
+  try {
+    // Disponible solo para pruebas locales
+    if (process.env.NODE_ENV === "production") {
+      return res.status(403).json({
         estado: "error",
-        mensaje: `El campo ${campo} debe tener entre 2 y 120 caracteres`
+        mensaje: "Eliminacion de demostracion deshabilitada"
       });
     }
+
+    const id = Number(req.params.id);
+
+    // Validar identificador
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      return res.status(400).json({
+        estado: "error",
+        mensaje: "El ID debe ser un numero entero positivo"
+      });
+    }
+
+    // Buscar posicion del producto
+    const indice = productosDemo.findIndex(
+      (producto) => producto.id === id
+    );
+
+    if (indice === -1) {
+      return res.status(404).json({
+        estado: "error",
+        mensaje: "Producto no encontrado"
+      });
+    }
+
+    // Eliminar producto temporalmente
+    const productoEliminado = productosDemo.splice(indice, 1)[0];
+
+    res.json({
+      estado: "ok",
+      mensaje: "Producto eliminado correctamente",
+      producto: productoEliminado
+    });
+
+  } catch (error) {
+    console.error("Error al eliminar producto:", error);
+
+    res.status(500).json({
+      estado: "error",
+      mensaje: "Error interno al eliminar el producto"
+    });
   }
-
-  // Actualizar los datos
-  producto.nombre = nombre.trim();
-  producto.categoria = categoria.trim();
-  producto.principioActivo = principioActivo.trim();
-
-  res.json({
-    estado: "ok",
-    mensaje: "Producto actualizado correctamente",
-    producto
-  });
 });
 
- // Eliminar un producto por su ID
-router.delete("/:id", (req, res) => {
-  // Solo para pruebas locales
-  if (process.env.NODE_ENV === "production") {
-    return res.status(403).json({
-      estado: "error",
-      mensaje: "Eliminacion de demostracion deshabilitada"
-    });
-  }
-
-  const id = Number(req.params.id);
-
-  // Validar el ID recibido
-  if (!Number.isSafeInteger(id) || id <= 0) {
-    return res.status(400).json({
-      estado: "error",
-      mensaje: "El ID debe ser un numero entero positivo"
-    });
-  }
-
-  // Buscar la posicion del producto
-  const indice = productosDemo.findIndex(
-    (producto) => producto.id === id
-  );
-
-  // Verificar si el producto existe
-  if (indice === -1) {
-    return res.status(404).json({
-      estado: "error",
-      mensaje: "Producto no encontrado"
-    });
-  }
-
-  // Eliminar el producto del arreglo
-  const productoEliminado = productosDemo.splice(indice, 1)[0];
-
-  res.json({
-    estado: "ok",
-    mensaje: "Producto eliminado correctamente",
-    producto: productoEliminado
-  });
-});
 
 export default router;
