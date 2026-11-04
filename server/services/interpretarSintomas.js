@@ -17,7 +17,7 @@ const normalizar = (texto) => {
 const molestias = [
   {
     nombre: "Dolor dental",
-    patron: /\b(muela|muelas|diente|dientes)\b/,
+    patron: /\b(muela|muelas|mulela|diente|dientes)\b/,
     explicacion: "Se identificó una molestia dental."
   },
   {
@@ -27,7 +27,7 @@ const molestias = [
   },
   {
     nombre: "Tos",
-    patron: /\b(tos|tosiendo|toser)\b/,
+    patron: /\b(tos|toz|tosiendo|toser)\b/,
     explicacion: "Se identificó tos."
   },
   {
@@ -42,12 +42,12 @@ const molestias = [
   },
   {
     nombre: "Dolor abdominal",
-    patron: /\b(barriga|estomago|panza)\b/,
+    patron: /\b(barriga|bariga|estomago|panza)\b/,
     explicacion: "Se identificó una molestia abdominal."
   },
   {
     nombre: "Presencia de flema",
-    patron: /\b(flema|flemas)\b/,
+    patron: /\b(flema|flemas|fleemas)\b/,
     explicacion: "Se identificó presencia de flema."
   },
   {
