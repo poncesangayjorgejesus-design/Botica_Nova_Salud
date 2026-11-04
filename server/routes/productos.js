@@ -1,5 +1,11 @@
 
 import express from "express";
+
+import {
+  listarProductos,
+  obtenerProductoPorId
+} from "../repositories/productosRepository.js";
+
 import { productosDemo } from "../data/productosDemo.js";
 
 const router = express.Router();
@@ -13,35 +19,29 @@ const normalizar = (texto) => {
     .trim();
 };
 
-// Obtener y buscar productos
-router.get("/", (req, res) => {
-  const nombre = normalizar(req.query.nombre);
-  const categoria = normalizar(req.query.categoria);
-  const principioActivo = normalizar(req.query.principioActivo);
 
-  const resultados = productosDemo.filter((producto) => {
-    const coincideNombre =
-      normalizar(producto.nombre).includes(nombre);
+ // Obtener productos desde el repositorio
+router.get("/", async (req, res) => {
+  try {
+    const productos = await listarProductos(req.query);
 
-    const coincideCategoria =
-      normalizar(producto.categoria).includes(categoria);
+    res.json({
+      estado: "ok",
+      mensaje: "Busqueda de productos NOVA SALUD PRO",
+      productos,
+      total: productos.length,
+      origen: "Datos de demostracion"
+    });
+  } catch (error) {
+    console.error("Error al consultar productos:", error);
 
-    const coincidePrincipio =
-      normalizar(producto.principioActivo).includes(principioActivo);
-
-    return coincideNombre &&
-           coincideCategoria &&
-           coincidePrincipio;
-  });
-
-  res.json({
-    estado: "ok",
-    mensaje: "Busqueda de productos NOVA SALUD PRO",
-    productos: resultados,
-    total: resultados.length,
-    origen: "Datos de demostracion"
-  });
+    res.status(500).json({
+      estado: "error",
+      mensaje: "No se pudieron consultar los productos"
+    });
+  }
 });
+
 
  // Obtener un producto por su ID
 router.get("/:id", (req, res) => {
