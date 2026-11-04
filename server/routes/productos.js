@@ -43,33 +43,45 @@ router.get("/", async (req, res) => {
 });
 
 
- // Obtener un producto por su ID
-router.get("/:id", (req, res) => {
-  const id = Number(req.params.id);
 
-  if (!Number.isSafeInteger(id) || id <= 0) {
-    return res.status(400).json({
+ // Consultar un producto por ID desde el repositorio
+router.get("/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    // Validar el identificador
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      return res.status(400).json({
+        estado: "error",
+        mensaje: "El ID debe ser un numero entero positivo"
+      });
+    }
+
+    // Consultar el repositorio
+    const producto = await obtenerProductoPorId(id);
+
+    if (!producto) {
+      return res.status(404).json({
+        estado: "error",
+        mensaje: "Producto no encontrado"
+      });
+    }
+
+    res.json({
+      estado: "ok",
+      producto
+    });
+
+  } catch (error) {
+    console.error("Error al consultar producto:", error);
+
+    res.status(500).json({
       estado: "error",
-      mensaje: "El ID debe ser un numero entero positivo"
+      mensaje: "Error interno al consultar el producto"
     });
   }
-
-  const producto = productosDemo.find(
-    (item) => item.id === id
-  );
-
-  if (!producto) {
-    return res.status(404).json({
-      estado: "error",
-      mensaje: "Producto no encontrado"
-    });
-  }
-
-  res.json({
-    estado: "ok",
-    producto
-  });
 });
+
 
  // Registrar un nuevo producto
 router.post("/", (req, res) => {
