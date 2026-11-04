@@ -32,7 +32,7 @@ export const obtenerProductoPorId = async (id) => {
   ) ?? null;
 };
 
- // Registrar un producto en el repositorio
+// Registrar un producto en el repositorio
 export const crearProducto = async (datos) => {
 
   // Generar un ID para el producto
@@ -54,4 +54,25 @@ export const crearProducto = async (datos) => {
   productosDemo.push(nuevoProducto);
 
   return nuevoProducto;
+};
+
+// Actualizar un producto en el repositorio
+export const actualizarProducto = async (id, datos) => {
+
+  // Buscar el producto por su ID
+  const producto = productosDemo.find(
+    (item) => item.id === Number(id)
+  );
+
+  // Verificar si existe
+  if (!producto) {
+    return null;
+  }
+
+  // Actualizar sus datos
+  producto.nombre = datos.nombre.trim();
+  producto.categoria = datos.categoria.trim();
+  producto.principioActivo = datos.principioActivo.trim();
+
+  return producto;
 };
