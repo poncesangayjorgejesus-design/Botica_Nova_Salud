@@ -14,6 +14,10 @@ import {
   formatearProductos
 } from "../services/formatearProducto.js";
 
+import {
+  validarCamposAdicionalesProducto
+} from "../services/validarDatosProducto.js";
+
 const router = express.Router();
 
 // ============================================
@@ -28,7 +32,6 @@ router.get("/", async (req, res) => {
   try {
     const productos = await listarProductos(req.query);
 
-    // Aplicar formato para la tienda web
     const productosFormateados = formatearProductos(productos);
 
     res.json({
@@ -73,7 +76,6 @@ router.get("/:id", async (req, res) => {
       });
     }
 
-    // Devolver producto con formato uniforme
     res.json({
       estado: "ok",
       producto: formatearProducto(producto)
@@ -95,7 +97,8 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    // Disponible solo para pruebas locales
+
+    // Solo disponible en entorno de demostracion
     if (process.env.NODE_ENV === "production") {
       return res.status(403).json({
         estado: "error",
@@ -109,14 +112,16 @@ router.post("/", async (req, res) => {
       principioActivo
     } = req.body ?? {};
 
+    // Campos obligatorios
     const campos = {
       nombre,
       categoria,
       principioActivo
     };
 
-    // Validar campos obligatorios
+    // Validar nombre, categoria y principio activo
     for (const [campo, valor] of Object.entries(campos)) {
+
       if (
         typeof valor !== "string" ||
         valor.trim().length < 2 ||
@@ -129,17 +134,39 @@ router.post("/", async (req, res) => {
       }
     }
 
-    // Registrar utilizando el repositorio
+    // ========================================
+    // VALIDAR CAMPOS ADICIONALES
+    // ========================================
+
+    const validacion = validarCamposAdicionalesProducto(
+      req.body
+    );
+
+    if (!validacion.valido) {
+      return res.status(400).json({
+        estado: "error",
+        mensaje: validacion.mensaje
+      });
+    }
+
+    // ========================================
+    // CREAR PRODUCTO
+    // ========================================
+
     const nuevoProducto = await crearProducto({
       nombre: nombre.trim(),
       categoria: categoria.trim(),
-      principioActivo: principioActivo.trim()
+      principioActivo: principioActivo.trim(),
+
+      // Precio, stock, presentacion,
+      // concentracion e imagen
+      ...validacion.datos
     });
 
     res.status(201).json({
       estado: "ok",
       mensaje: "Producto registrado correctamente",
-      producto: nuevoProducto
+      producto: formatearProducto(nuevoProducto)
     });
 
   } catch (error) {
@@ -158,7 +185,8 @@ router.post("/", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   try {
-    // Disponible solo para pruebas locales
+
+    // Solo disponible en entorno de demostracion
     if (process.env.NODE_ENV === "production") {
       return res.status(403).json({
         estado: "error",
@@ -168,6 +196,7 @@ router.put("/:id", async (req, res) => {
 
     const id = Number(req.params.id);
 
+    // Validar identificador
     if (!Number.isSafeInteger(id) || id <= 0) {
       return res.status(400).json({
         estado: "error",
@@ -181,14 +210,16 @@ router.put("/:id", async (req, res) => {
       principioActivo
     } = req.body ?? {};
 
+    // Campos obligatorios
     const campos = {
       nombre,
       categoria,
       principioActivo
     };
 
-    // Validar campos obligatorios
+    // Validar campos principales
     for (const [campo, valor] of Object.entries(campos)) {
+
       if (
         typeof valor !== "string" ||
         valor.trim().length < 2 ||
@@ -201,12 +232,36 @@ router.put("/:id", async (req, res) => {
       }
     }
 
-    // Actualizar utilizando el repositorio
-    const productoActualizado = await actualizarProducto(id, {
-      nombre: nombre.trim(),
-      categoria: categoria.trim(),
-      principioActivo: principioActivo.trim()
-    });
+    // ========================================
+    // VALIDAR CAMPOS ADICIONALES
+    // ========================================
+
+    const validacion = validarCamposAdicionalesProducto(
+      req.body
+    );
+
+    if (!validacion.valido) {
+      return res.status(400).json({
+        estado: "error",
+        mensaje: validacion.mensaje
+      });
+    }
+
+    // ========================================
+    // ACTUALIZAR PRODUCTO
+    // ========================================
+
+    const productoActualizado = await actualizarProducto(
+      id,
+      {
+        nombre: nombre.trim(),
+        categoria: categoria.trim(),
+        principioActivo: principioActivo.trim(),
+
+        // Nuevos campos validados
+        ...validacion.datos
+      }
+    );
 
     if (!productoActualizado) {
       return res.status(404).json({
@@ -218,7 +273,7 @@ router.put("/:id", async (req, res) => {
     res.json({
       estado: "ok",
       mensaje: "Producto actualizado correctamente",
-      producto: productoActualizado
+      producto: formatearProducto(productoActualizado)
     });
 
   } catch (error) {
@@ -237,7 +292,8 @@ router.put("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
-    // Disponible solo para pruebas locales
+
+    // Solo disponible en entorno de demostracion
     if (process.env.NODE_ENV === "production") {
       return res.status(403).json({
         estado: "error",
@@ -254,7 +310,7 @@ router.delete("/:id", async (req, res) => {
       });
     }
 
-    // Eliminar utilizando el repositorio
+    // Eliminar producto del repositorio
     const productoEliminado = await eliminarProducto(id);
 
     if (!productoEliminado) {
@@ -267,7 +323,7 @@ router.delete("/:id", async (req, res) => {
     res.json({
       estado: "ok",
       mensaje: "Producto eliminado correctamente",
-      producto: productoEliminado
+      producto: formatearProducto(productoEliminado)
     });
 
   } catch (error) {
