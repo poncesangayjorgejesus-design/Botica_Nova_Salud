@@ -1,16 +1,18 @@
 
 import express from "express";
 
-import { interpretarSintomas } from "../services/interpretarSintomas.js";
+import {
+  analizarConsultaIA
+} from "../services/inteligenciaArtificial.js";
 
 const router = express.Router();
 
-// Interpretar una consulta de síntomas
-router.post("/", (req, res) => {
+// Analizar consultas mediante IA o respaldo local
+router.post("/", async (req, res) => {
   try {
     const mensaje = req.body?.mensaje;
 
-    // Validar que se envíe un mensaje
+    // Validar el mensaje
     if (
       typeof mensaje !== "string" ||
       mensaje.trim().length < 3 ||
@@ -22,8 +24,8 @@ router.post("/", (req, res) => {
       });
     }
 
-    // Interpretar el mensaje
-    const resultado = interpretarSintomas(mensaje);
+    // Analizar la consulta
+    const resultado = await analizarConsultaIA(mensaje);
 
     res.json({
       sistema: "NOVA SALUD PRO",
