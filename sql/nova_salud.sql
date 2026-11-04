@@ -29,3 +29,16 @@ CREATE TABLE IF NOT EXISTS lotes (
  INDEX idx_lotes_vencimiento (vencimiento),
  CONSTRAINT fk_lotes_productos FOREIGN KEY (producto_id) REFERENCES productos(id)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS pedidos (
+ id VARCHAR(64) PRIMARY KEY,
+ fecha VARCHAR(35) NOT NULL,
+ cliente VARCHAR(100) NOT NULL,
+ dni CHAR(8) NOT NULL,
+ total DECIMAL(12,2) NOT NULL,
+ estado VARCHAR(50) NOT NULL,
+ procesado VARCHAR(35) NULL,
+ revisionConfirmada BOOLEAN NOT NULL DEFAULT FALSE,
+ nota VARCHAR(255) NOT NULL DEFAULT '',
+ INDEX idx_pedidos_estado (estado)
+) ENGINE=InnoDB;
