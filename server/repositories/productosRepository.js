@@ -75,4 +75,24 @@ export const actualizarProducto = async (id, datos) => {
   producto.principioActivo = datos.principioActivo.trim();
 
   return producto;
+  
+};
+
+ // Eliminar un producto desde el repositorio
+export const eliminarProducto = async (id) => {
+
+  // Buscar la posicion del producto
+  const indice = productosDemo.findIndex(
+    (producto) => producto.id === Number(id)
+  );
+
+  // Verificar si el producto existe
+  if (indice === -1) {
+    return null;
+  }
+
+  // Eliminar el producto
+  const productoEliminado = productosDemo.splice(indice, 1)[0];
+
+  return productoEliminado;
 };
