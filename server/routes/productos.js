@@ -1,7 +1,6 @@
 
 import express from "express";
 
-
 import {
   listarProductos,
   obtenerProductoPorId,
@@ -10,17 +9,33 @@ import {
   eliminarProducto
 } from "../repositories/productosRepository.js";
 
+import {
+  formatearProducto,
+  formatearProductos
+} from "../services/formatearProducto.js";
+
 const router = express.Router();
+
+// ============================================
+// NOVA SALUD PRO - API DE PRODUCTOS
+// ============================================
+
+// ============================================
+// GET - LISTAR TODOS LOS PRODUCTOS
+// ============================================
 
 router.get("/", async (req, res) => {
   try {
     const productos = await listarProductos(req.query);
 
+    // Aplicar formato para la tienda web
+    const productosFormateados = formatearProductos(productos);
+
     res.json({
       estado: "ok",
       mensaje: "Busqueda de productos NOVA SALUD PRO",
-      productos,
-      total: productos.length,
+      productos: productosFormateados,
+      total: productosFormateados.length,
       origen: "Datos de demostracion"
     });
 
@@ -34,6 +49,9 @@ router.get("/", async (req, res) => {
   }
 });
 
+// ============================================
+// GET - OBTENER PRODUCTO POR ID
+// ============================================
 
 router.get("/:id", async (req, res) => {
   try {
@@ -55,9 +73,10 @@ router.get("/:id", async (req, res) => {
       });
     }
 
+    // Devolver producto con formato uniforme
     res.json({
       estado: "ok",
-      producto
+      producto: formatearProducto(producto)
     });
 
   } catch (error) {
@@ -70,6 +89,9 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+// ============================================
+// POST - REGISTRAR PRODUCTO
+// ============================================
 
 router.post("/", async (req, res) => {
   try {
@@ -81,7 +103,11 @@ router.post("/", async (req, res) => {
       });
     }
 
-    const { nombre, categoria, principioActivo } = req.body ?? {};
+    const {
+      nombre,
+      categoria,
+      principioActivo
+    } = req.body ?? {};
 
     const campos = {
       nombre,
@@ -105,9 +131,9 @@ router.post("/", async (req, res) => {
 
     // Registrar utilizando el repositorio
     const nuevoProducto = await crearProducto({
-      nombre,
-      categoria,
-      principioActivo
+      nombre: nombre.trim(),
+      categoria: categoria.trim(),
+      principioActivo: principioActivo.trim()
     });
 
     res.status(201).json({
@@ -126,6 +152,9 @@ router.post("/", async (req, res) => {
   }
 });
 
+// ============================================
+// PUT - ACTUALIZAR PRODUCTO
+// ============================================
 
 router.put("/:id", async (req, res) => {
   try {
@@ -139,7 +168,6 @@ router.put("/:id", async (req, res) => {
 
     const id = Number(req.params.id);
 
-    // Validar identificador
     if (!Number.isSafeInteger(id) || id <= 0) {
       return res.status(400).json({
         estado: "error",
@@ -147,8 +175,11 @@ router.put("/:id", async (req, res) => {
       });
     }
 
-    // Obtener los nuevos datos
-    const { nombre, categoria, principioActivo } = req.body ?? {};
+    const {
+      nombre,
+      categoria,
+      principioActivo
+    } = req.body ?? {};
 
     const campos = {
       nombre,
@@ -156,7 +187,7 @@ router.put("/:id", async (req, res) => {
       principioActivo
     };
 
-    // Validar campos
+    // Validar campos obligatorios
     for (const [campo, valor] of Object.entries(campos)) {
       if (
         typeof valor !== "string" ||
@@ -172,9 +203,9 @@ router.put("/:id", async (req, res) => {
 
     // Actualizar utilizando el repositorio
     const productoActualizado = await actualizarProducto(id, {
-      nombre,
-      categoria,
-      principioActivo
+      nombre: nombre.trim(),
+      categoria: categoria.trim(),
+      principioActivo: principioActivo.trim()
     });
 
     if (!productoActualizado) {
@@ -200,12 +231,13 @@ router.put("/:id", async (req, res) => {
   }
 });
 
+// ============================================
+// DELETE - ELIMINAR PRODUCTO
+// ============================================
 
-
-// Eliminar productos utilizando el repositorio
 router.delete("/:id", async (req, res) => {
   try {
-    // Solo para pruebas locales
+    // Disponible solo para pruebas locales
     if (process.env.NODE_ENV === "production") {
       return res.status(403).json({
         estado: "error",
@@ -213,7 +245,6 @@ router.delete("/:id", async (req, res) => {
       });
     }
 
-    // Obtener y validar ID
     const id = Number(req.params.id);
 
     if (!Number.isSafeInteger(id) || id <= 0) {
@@ -249,6 +280,8 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-
+// ============================================
+// EXPORTAR RUTAS
+// ============================================
 
 export default router;
