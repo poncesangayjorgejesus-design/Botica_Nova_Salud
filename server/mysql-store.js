@@ -67,3 +67,22 @@ export async function writeMysql(name,items){
   await executor().query('DELETE FROM movimientos');
   await sqlInsert('movimientos',['id','fecha','accion','detalle'],items.slice(0,1000));
 }
+
+export async function transactionMysql(fn){
+  if(context.getStore())return fn();
+  const connection=await pool.getConnection();let locked=false;
+  try{
+    const [[lock]]=await connection.query("SELECT GET_LOCK('nova_salud_academico_write',15) AS acquired");
+    if(lock.acquired!==1)throw new Error('La base de datos está ocupada; reintenta');locked=true;
+    await connection.beginTransaction();
+    const result=await context.run(connection,fn);
+    await connection.commit();return result;
+  }catch(e){try{await connection.rollback();}catch{}throw e;}
+  finally{if(locked){try{await connection.query("SELECT RELEASE_LOCK('nova_salud_academico_write')");}catch{}}connection.release();}
+}
+export async function auditMysql(accion,detalle){
+  const crypto=await import('node:crypto');
+  await executor().query('INSERT INTO movimientos(id,fecha,accion,detalle) VALUES(?,?,?,?)',[crypto.randomUUID(),new Date().toISOString(),accion,String(detalle).slice(0,250)]);
+  await executor().query('DELETE FROM movimientos WHERE id NOT IN (SELECT id FROM (SELECT id FROM movimientos ORDER BY fecha DESC,id DESC LIMIT 1000) m)');
+}
+export async function checkMysql(){await pool.query('SELECT 1');return true;}
