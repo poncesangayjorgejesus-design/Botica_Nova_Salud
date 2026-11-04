@@ -184,4 +184,47 @@ router.put("/:id", (req, res) => {
   });
 });
 
+ // Eliminar un producto por su ID
+router.delete("/:id", (req, res) => {
+  // Solo para pruebas locales
+  if (process.env.NODE_ENV === "production") {
+    return res.status(403).json({
+      estado: "error",
+      mensaje: "Eliminacion de demostracion deshabilitada"
+    });
+  }
+
+  const id = Number(req.params.id);
+
+  // Validar el ID recibido
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    return res.status(400).json({
+      estado: "error",
+      mensaje: "El ID debe ser un numero entero positivo"
+    });
+  }
+
+  // Buscar la posicion del producto
+  const indice = productosDemo.findIndex(
+    (producto) => producto.id === id
+  );
+
+  // Verificar si el producto existe
+  if (indice === -1) {
+    return res.status(404).json({
+      estado: "error",
+      mensaje: "Producto no encontrado"
+    });
+  }
+
+  // Eliminar el producto del arreglo
+  const productoEliminado = productosDemo.splice(indice, 1)[0];
+
+  res.json({
+    estado: "ok",
+    mensaje: "Producto eliminado correctamente",
+    producto: productoEliminado
+  });
+});
+
 export default router;
