@@ -1,11 +1,14 @@
 
+import "dotenv/config";
 import express from "express";
 import productosRoutes from "./routes/productos.js";
 import asistenteRoutes from "./routes/asistente.js";
 
 
 const app = express();
-const PORT = 3001;
+
+const PORT = Number(process.env.PORT) || 3001;
+
 
 app.use(express.json());
 
