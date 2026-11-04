@@ -31,3 +31,27 @@ export const obtenerProductoPorId = async (id) => {
     (producto) => producto.id === Number(id)
   ) ?? null;
 };
+
+ // Registrar un producto en el repositorio
+export const crearProducto = async (datos) => {
+
+  // Generar un ID para el producto
+  const nuevoId = Math.max(
+    0,
+    ...productosDemo.map((producto) => producto.id)
+  ) + 1;
+
+  // Crear el objeto del producto
+  const nuevoProducto = {
+    id: nuevoId,
+    nombre: datos.nombre.trim(),
+    categoria: datos.categoria.trim(),
+    principioActivo: datos.principioActivo.trim(),
+    demo: true
+  };
+
+  // Guardar temporalmente el producto
+  productosDemo.push(nuevoProducto);
+
+  return nuevoProducto;
+};
