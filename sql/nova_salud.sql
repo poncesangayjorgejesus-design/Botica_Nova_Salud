@@ -42,3 +42,20 @@ CREATE TABLE IF NOT EXISTS pedidos (
  nota VARCHAR(255) NOT NULL DEFAULT '',
  INDEX idx_pedidos_estado (estado)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS pedido_items (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ pedido_id VARCHAR(64) NOT NULL,
+ producto_id INT UNSIGNED NOT NULL,
+ nombre VARCHAR(100) NOT NULL,
+ principio VARCHAR(100) NOT NULL DEFAULT '',
+ concentracion VARCHAR(100) NOT NULL DEFAULT '',
+ forma VARCHAR(100) NOT NULL DEFAULT '',
+ qty INT UNSIGNED NOT NULL,
+ precio DECIMAL(11,2) NOT NULL,
+ subtotal DECIMAL(12,2) NOT NULL,
+ receta VARCHAR(150) NULL,
+ INDEX idx_pedido_items_pedido (pedido_id),
+ CONSTRAINT fk_items_pedidos FOREIGN KEY (pedido_id) REFERENCES pedidos(id),
+ CONSTRAINT fk_items_productos FOREIGN KEY (producto_id) REFERENCES productos(id)
+) ENGINE=InnoDB;
