@@ -59,3 +59,11 @@ CREATE TABLE IF NOT EXISTS pedido_items (
  CONSTRAINT fk_items_pedidos FOREIGN KEY (pedido_id) REFERENCES pedidos(id),
  CONSTRAINT fk_items_productos FOREIGN KEY (producto_id) REFERENCES productos(id)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS movimientos (
+ id CHAR(36) PRIMARY KEY,
+ fecha VARCHAR(35) NOT NULL,
+ accion VARCHAR(60) NOT NULL,
+ detalle VARCHAR(250) NOT NULL,
+ INDEX idx_movimientos_fecha (fecha)
+) ENGINE=InnoDB;
