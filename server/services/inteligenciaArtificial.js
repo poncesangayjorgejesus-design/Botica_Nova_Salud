@@ -2,17 +2,23 @@
 import OpenAI from "openai";
 import { interpretarSintomas } from "./interpretarSintomas.js";
 
-// Advertencia para consultas de salud
+// ============================================
+// ADVERTENCIAS DE SALUD
+// ============================================
+
 const ADVERTENCIA =
   "Información general, no es un diagnóstico ni una receta. " +
   "Busca atención profesional si los síntomas empeoran. " +
   "Ante dificultad para respirar u otros signos graves, " +
   "busca atención urgente.";
 
-// Servicio de inteligencia artificial
+// ============================================
+// SERVICIO DE INTELIGENCIA ARTIFICIAL
+// ============================================
+
 export const analizarConsultaIA = async (mensaje) => {
 
-  // Conservar el intérprete anterior como respaldo
+  // Mantener el intérprete local como respaldo
   const resultadoLocal = interpretarSintomas(mensaje);
 
   const respaldo = {
@@ -20,29 +26,40 @@ export const analizarConsultaIA = async (mensaje) => {
     origen: "local"
   };
 
-  // Si el mensaje es inválido, no consultar la API
+  // Validar el mensaje recibido
   if (resultadoLocal.estado === "error") {
     return respaldo;
   }
 
-  // Comprobar si la IA externa está configurada
+  // ============================================
+  // VERIFICAR CONFIGURACIÓN DE OPENAI
+  // ============================================
+
   const iaActiva = process.env.AI_ENABLED === "true";
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   const modelo = process.env.OPENAI_MODEL?.trim();
 
   if (!iaActiva || !apiKey || !modelo) {
+    console.log("IA externa sin configurar. Usando respaldo local.");
     return respaldo;
   }
 
   try {
-    // Cliente disponible solo en el backend
+
+    // ============================================
+    // CREAR CLIENTE OPENAI
+    // ============================================
+
     const cliente = new OpenAI({
       apiKey,
       timeout: 10000,
       maxRetries: 0
     });
 
-    // Enviar la consulta a la IA
+    // ============================================
+    // ENVIAR CONSULTA A LA IA
+    // ============================================
+
     const respuesta = await cliente.responses.create({
       model: modelo,
 
@@ -55,10 +72,12 @@ Reconoce errores ortográficos y expresiones coloquiales.
 No afirmes diagnósticos.
 No prescribas medicamentos ni dosis.
 No inventes productos, precios ni existencias.
+
 Si hay ambigüedad, solicita aclaración.
 Si hay signos graves, indica buscar atención urgente.
 
 Responde únicamente con un objeto JSON válido:
+
 {
   "estado": "ok",
   "molestia": "Nombre de la molestia",
@@ -66,6 +85,7 @@ Responde únicamente con un objeto JSON válido:
 }
 
 Si no puedes identificar la molestia, usa:
+
 {
   "estado": "aclaracion",
   "molestia": "",
@@ -78,9 +98,21 @@ Si no puedes identificar la molestia, usa:
       store: false
     });
 
-    const datos = JSON.parse(respuesta.output_text ?? "");
+    // ============================================
+    // PROCESAR RESPUESTA
+    // ============================================
 
-    // Validar la respuesta de la IA
+    const contenido = respuesta.output_text ?? "";
+
+    if (!contenido.trim()) {
+      throw new Error(
+        "La IA no devolvió texto para procesar"
+      );
+    }
+
+    const datos = JSON.parse(contenido);
+
+    // Validar los datos recibidos
     if (
       !["ok", "aclaracion"].includes(datos.estado) ||
       typeof datos.explicacion !== "string" ||
@@ -96,6 +128,10 @@ Si no puedes identificar la molestia, usa:
       throw new Error("Respuesta de IA no válida");
     }
 
+    // ============================================
+    // RESPUESTA QUE REQUIERE ACLARACIÓN
+    // ============================================
+
     if (datos.estado === "aclaracion") {
       return {
         estado: "aclaracion",
@@ -105,6 +141,10 @@ Si no puedes identificar la molestia, usa:
         origen: "ia"
       };
     }
+
+    // ============================================
+    // RESPUESTA CORRECTA DE LA IA
+    // ============================================
 
     return {
       estado: "ok",
@@ -116,7 +156,21 @@ Si no puedes identificar la molestia, usa:
     };
 
   } catch (error) {
-    console.error("IA externa no disponible. Usando respaldo local.");
+
+    // ============================================
+    // MOSTRAR INFORMACIÓN SEGURA DEL ERROR
+    // ============================================
+
+    console.error("Error al consultar OpenAI:", {
+      estadoHTTP: error?.status ?? null,
+      codigo: error?.code ?? null,
+      tipo: error?.type ?? null,
+      nombre: error?.name ?? null
+    });
+
+    // No mostrar claves ni mensajes completos del proveedor
+    console.log("Usando el asistente local de respaldo");
+
     return respaldo;
   }
 };
