@@ -18,3 +18,14 @@ CREATE TABLE IF NOT EXISTS productos (
  INDEX idx_producto_nombre (nombre),
  INDEX idx_producto_categoria (categoria)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS lotes (
+ id VARCHAR(64) PRIMARY KEY,
+ producto_id INT UNSIGNED NOT NULL,
+ codigo VARCHAR(50) NOT NULL,
+ cantidad INT UNSIGNED NOT NULL,
+ vencimiento DATE NOT NULL,
+ INDEX idx_lotes_producto (producto_id),
+ INDEX idx_lotes_vencimiento (vencimiento),
+ CONSTRAINT fk_lotes_productos FOREIGN KEY (producto_id) REFERENCES productos(id)
+) ENGINE=InnoDB;
