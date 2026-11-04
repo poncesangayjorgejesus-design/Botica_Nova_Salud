@@ -1,0 +1,28 @@
+services:
+  nova-salud:
+    build: .
+    container_name: nova-salud-pro
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      NOVA_HOST: 0.0.0.0
+      PORT: 3000
+      NOVA_ADMIN_PASSWORD: ${NOVA_ADMIN_PASSWORD:?Define NOVA_ADMIN_PASSWORD en .env}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      NOVA_AI_MODEL: ${NOVA_AI_MODEL:-gpt-4o-mini}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      NOVA_STORAGE: mysql
+      # Dentro del contenedor localhost NO es Windows.
+      MYSQL_HOST: host.docker.internal
+      MYSQL_PORT: ${MYSQL_PORT:-3306}
+      MYSQL_USER: ${MYSQL_USER:-root}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-nova_salud}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
