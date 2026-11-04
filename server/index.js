@@ -1,6 +1,8 @@
 
 import express from "express";
 import productosRoutes from "./routes/productos.js";
+import asistenteRoutes from "./routes/asistente.js";
+
 
 const app = express();
 const PORT = 3001;
@@ -18,6 +20,9 @@ app.get("/api/health", (req, res) => {
 
 // Rutas de productos
 app.use("/api/productos", productosRoutes);
+
+// Ruta del asistente de sintomas
+app.use("/api/asistente", asistenteRoutes);
 
 // Iniciar servidor
 app.listen(PORT, () => {
