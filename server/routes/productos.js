@@ -1,14 +1,14 @@
 
 import express from "express";
 
+
 import {
   listarProductos,
   obtenerProductoPorId,
   crearProducto,
-  actualizarProducto
+  actualizarProducto,
+  eliminarProducto
 } from "../repositories/productosRepository.js";
-
-import { productosDemo } from "../data/productosDemo.js";
 
 const router = express.Router();
 
@@ -201,9 +201,11 @@ router.put("/:id", async (req, res) => {
 });
 
 
-router.delete("/:id", (req, res) => {
+
+// Eliminar productos utilizando el repositorio
+router.delete("/:id", async (req, res) => {
   try {
-    // Disponible solo para pruebas locales
+    // Solo para pruebas locales
     if (process.env.NODE_ENV === "production") {
       return res.status(403).json({
         estado: "error",
@@ -211,9 +213,9 @@ router.delete("/:id", (req, res) => {
       });
     }
 
+    // Obtener y validar ID
     const id = Number(req.params.id);
 
-    // Validar identificador
     if (!Number.isSafeInteger(id) || id <= 0) {
       return res.status(400).json({
         estado: "error",
@@ -221,20 +223,15 @@ router.delete("/:id", (req, res) => {
       });
     }
 
-    // Buscar posicion del producto
-    const indice = productosDemo.findIndex(
-      (producto) => producto.id === id
-    );
+    // Eliminar utilizando el repositorio
+    const productoEliminado = await eliminarProducto(id);
 
-    if (indice === -1) {
+    if (!productoEliminado) {
       return res.status(404).json({
         estado: "error",
         mensaje: "Producto no encontrado"
       });
     }
-
-    // Eliminar producto temporalmente
-    const productoEliminado = productosDemo.splice(indice, 1)[0];
 
     res.json({
       estado: "ok",
@@ -251,6 +248,7 @@ router.delete("/:id", (req, res) => {
     });
   }
 });
+
 
 
 export default router;
