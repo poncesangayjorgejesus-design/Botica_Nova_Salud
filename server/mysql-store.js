@@ -43,3 +43,27 @@ export async function readMysql(name){
   }
   const [rows]=await executor().query('SELECT id,fecha,accion,detalle FROM movimientos ORDER BY fecha DESC,id DESC LIMIT 1000');return rows;
 }
+
+export async function writeMysql(name,items){
+  checkName(name);if(!Array.isArray(items))throw new Error('La colección debe ser una lista');
+  if(name==='catalogo'){
+    const fields=['id','nombre','principio','concentracion','forma','categoria','descripcion','imagen','precio','minimo','receta','origen','visible'];
+    const updates=fields.filter(f=>f!=='id').map(f=>`\`${f}\`=VALUES(\`${f}\`)`).join(',');
+    await sqlInsert('productos',fields,items.map(p=>({...p,imagen:p.imagen||'',origen:p.origen||'Datos académicos de prueba',visible:p.visible!==false?1:0})),updates);
+    await executor().query('DELETE FROM lotes');
+    const lots=items.flatMap(p=>(p.lotes||[]).map(l=>({id:l.id,producto_id:p.id,codigo:l.codigo,cantidad:l.cantidad,vencimiento:l.vencimiento})));
+    await sqlInsert('lotes',['id','producto_id','codigo','cantidad','vencimiento'],lots);
+    return;
+  }
+  if(name==='pedidos'){
+    const fields=['id','fecha','cliente','dni','total','estado','procesado','revisionConfirmada','nota'];
+    const updates=fields.filter(f=>f!=='id').map(f=>`\`${f}\`=VALUES(\`${f}\`)`).join(',');
+    await sqlInsert('pedidos',fields,items.map(o=>({...o,procesado:o.procesado||null,revisionConfirmada:o.revisionConfirmada?1:0,nota:o.nota||''})),updates);
+    await executor().query('DELETE FROM pedido_items');
+    const lines=items.flatMap(o=>(o.items||[]).map(i=>({pedido_id:o.id,producto_id:i.id,nombre:i.nombre,principio:i.principio||'',concentracion:i.concentracion||'',forma:i.forma||'',qty:i.qty,precio:i.precio,subtotal:i.subtotal,receta:i.receta||'Por verificar'})));
+    await sqlInsert('pedido_items',['pedido_id','producto_id','nombre','principio','concentracion','forma','qty','precio','subtotal','receta'],lines);
+    return;
+  }
+  await executor().query('DELETE FROM movimientos');
+  await sqlInsert('movimientos',['id','fecha','accion','detalle'],items.slice(0,1000));
+}
