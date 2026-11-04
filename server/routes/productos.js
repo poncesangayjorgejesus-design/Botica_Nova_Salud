@@ -1,10 +1,13 @@
 
 import express from "express";
 
+
 import {
   listarProductos,
-  obtenerProductoPorId
+  obtenerProductoPorId,
+  crearProducto
 } from "../repositories/productosRepository.js";
+
 
 import { productosDemo } from "../data/productosDemo.js";
 
