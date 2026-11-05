@@ -1,18 +1,28 @@
 
 import "dotenv/config";
 import express from "express";
+
+// Rutas originales del integrante 2
 import productosRoutes from "./routes/productos.js";
 import asistenteRoutes from "./routes/asistente.js";
 
+// Nueva ruta del catalogo integrado
+import catalogoIntegradoRoutes from "./routes/catalogoIntegrado.js";
 
 const app = express();
 
 const PORT = Number(process.env.PORT) || 3001;
 
+// ============================================
+// CONFIGURACION DEL SERVIDOR
+// ============================================
 
 app.use(express.json());
 
-// Comprobar que funciona el servidor
+// ============================================
+// COMPROBAR ESTADO DEL SERVIDOR
+// ============================================
+
 app.get("/api/health", (req, res) => {
   res.json({
     estado: "ok",
@@ -21,13 +31,29 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Rutas de productos
+// ============================================
+// RUTAS ORIGINALES
+// ============================================
+
+// API de productos del integrante 2
 app.use("/api/productos", productosRoutes);
 
-// Ruta del asistente de sintomas
+// Asistente inteligente
 app.use("/api/asistente", asistenteRoutes);
 
-// Iniciar servidor
+// ============================================
+// RUTAS DE INTEGRACION
+// ============================================
+
+// Catalogo para la tienda React
+app.use("/api/products", catalogoIntegradoRoutes);
+
+// ============================================
+// INICIAR SERVIDOR
+// ============================================
+
 app.listen(PORT, () => {
-  console.log(`Servidor iniciado en http://localhost:${PORT}`);
+  console.log(
+    `Servidor NOVA SALUD PRO iniciado en http://localhost:${PORT}`
+  );
 });
