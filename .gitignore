@@ -1,2 +1,23 @@
+﻿# NOVA SALUD PRO - GITIGNORE
 
+# Dependencias
+node_modules/
+
+# Variables privadas
 .env
+.env.*
+!.env.example
+
+# Archivos generados
+client/dist/
+dist/
+build/
+coverage/
+
+# Archivos temporales
+*.log
+npm-debug.log*
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
