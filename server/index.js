@@ -1,30 +1,22 @@
 
 import "dotenv/config";
 import express from "express";
+import path from "node:path";
 
 // Rutas originales del integrante 2
 import productosRoutes from "./routes/productos.js";
 import asistenteRoutes from "./routes/asistente.js";
 
-// Nueva ruta del catalogo integrado
+// Rutas integradas
 import catalogoIntegradoRoutes from "./routes/catalogoIntegrado.js";
-
 import asistenteReactRoutes from "./routes/asistenteReact.js";
 
 const app = express();
-
 const PORT = Number(process.env.PORT) || 3001;
-
-// ============================================
-// CONFIGURACION DEL SERVIDOR
-// ============================================
 
 app.use(express.json());
 
-// ============================================
-// COMPROBAR ESTADO DEL SERVIDOR
-// ============================================
-
+// Comprobar estado del servidor
 app.get("/api/health", (req, res) => {
   res.json({
     estado: "ok",
@@ -33,33 +25,33 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// ============================================
-// RUTAS ORIGINALES
-// ============================================
-
-// API de productos del integrante 2
+// Rutas originales
 app.use("/api/productos", productosRoutes);
-
-// Asistente inteligente
 app.use("/api/asistente", asistenteRoutes);
 
-// ============================================
-// RUTAS DE INTEGRACION
-// ============================================
-
-// Catalogo para la tienda React
+// Rutas integradas
 app.use("/api/products", catalogoIntegradoRoutes);
-
-// Asistente de inteligencia artificial para React
 app.use("/api/ai/symptoms", asistenteReactRoutes);
 
+// Servir archivos compilados de React
+const frontendPath = path.resolve("client/dist");
 
-// ============================================
-// INICIAR SERVIDOR
-// ============================================
+app.use(express.static(frontendPath));
 
-app.listen(PORT, () => {
-  console.log(
-    `Servidor NOVA SALUD PRO iniciado en http://localhost:${PORT}`
-  );
+// Cargar React en las rutas que no sean de la API
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api/")) {
+    return next();
+  }
+
+  res.sendFile(path.join(frontendPath, "index.html"), (error) => {
+    if (error) {
+      next(error);
+    }
+  });
+});
+
+// Iniciar servidor
+app.listen(PORT, process.env.NOVA_HOST || "0.0.0.0", () => {
+  console.log(`Servidor NOVA SALUD PRO iniciado en el puerto ${PORT}`);
 });
