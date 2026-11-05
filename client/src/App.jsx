@@ -1,0 +1,5 @@
+import React,{useState,useEffect,useRef} from 'react';
+import {Info,X} from 'lucide-react';
+import Store from './Store.jsx';
+import Admin from './Admin.jsx';
+export default function App(){const [theme,setTheme]=useState(()=>localStorage.getItem('nova-theme')==='dark'?'dark':'light'),[toast,setToast]=useState('');const toastRef=useRef(null);useEffect(()=>{document.documentElement.dataset.theme=theme;localStorage.setItem('nova-theme',theme)},[theme]);const notify=message=>{setToast(message);clearTimeout(toastRef.current);toastRef.current=setTimeout(()=>setToast(''),4200)};useEffect(()=>()=>clearTimeout(toastRef.current),[]);const isAdmin=window.location.pathname.startsWith('/admin');return <><>{isAdmin?<Admin theme={theme} toggle={()=>setTheme(x=>x==='dark'?'light':'dark')} notify={notify}/>:<Store theme={theme} toggle={()=>setTheme(x=>x==='dark'?'light':'dark')} notify={notify}/>}</>{toast&&<div className="toast" role="status"><Info size={18}/>{toast}<button onClick={()=>setToast('')} aria-label="Cerrar notificación"><X size={15}/></button></div>}</>}
