@@ -9,6 +9,8 @@ import asistenteRoutes from "./routes/asistente.js";
 // Nueva ruta del catalogo integrado
 import catalogoIntegradoRoutes from "./routes/catalogoIntegrado.js";
 
+import asistenteReactRoutes from "./routes/asistenteReact.js";
+
 const app = express();
 
 const PORT = Number(process.env.PORT) || 3001;
@@ -47,6 +49,10 @@ app.use("/api/asistente", asistenteRoutes);
 
 // Catalogo para la tienda React
 app.use("/api/products", catalogoIntegradoRoutes);
+
+// Asistente de inteligencia artificial para React
+app.use("/api/ai/symptoms", asistenteReactRoutes);
+
 
 // ============================================
 // INICIAR SERVIDOR
