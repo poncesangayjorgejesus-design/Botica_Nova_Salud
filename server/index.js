@@ -1,5 +1,4 @@
 
-
 import "dotenv/config";
 import express from "express";
 import path from "node:path";
@@ -41,10 +40,8 @@ app.use("/api/asistente", asistenteRoutes);
 app.use("/api/products", catalogoIntegradoRoutes);
 app.use("/api/ai/symptoms", asistenteReactRoutes);
 
-// Autenticación administrativa
+// Autenticación y administración
 app.use("/api/auth", authRoutes);
-
-// Panel administrativo
 app.use("/api/admin", adminRoutes);
 
 // Categorías y presentaciones
@@ -68,53 +65,7 @@ app.get("*", (req, res, next) => {
   }
 
   res.sendFile(path.join(frontendPath, "index.html"), (error) => {
-    if (error) {
-      next(error);
-    }
-  });
-});
-
-// Iniciar servidor
-app.listen(PORT, process.env.NOVA_HOST || "0.0.0.0", () => {
-  console.log(`Servidor NOVA SALUD PRO iniciado en el puerto ${PORT}`);
-});
-
->>>>>>> feature/backend-pedidos-admin
-app.use("/api/products", catalogoIntegradoRoutes);
-app.use("/api/ai/symptoms", asistenteReactRoutes);
-// Autenticacion del panel administrativo
-app.use("/api/auth", authRoutes);
-// Panel administrativo protegido
-app.use("/api/admin", adminRoutes);
-
-// Categorias y presentaciones del catalogo
-app.use("/api/meta", metaRoutes);
-
-// Historial de movimientos administrativos
-app.use("/api/movements", movimientosRoutes);
-
-// Solicitudes de productos y pedidos administrativos
-app.use("/api/orders", pedidosRoutes);
-
-
-// Servir archivos compilados de React
-const frontendPath = path.resolve("client/dist");
-
-<<<<<<< HEAD
-app.use(express.static(frontendPath));
-=======
->>>>>>> feature/backend-pedidos-admin
-
-// Cargar React en las rutas que no sean de la API
-app.get("*", (req, res, next) => {
-  if (req.path.startsWith("/api/")) {
-    return next();
-  }
-
-  res.sendFile(path.join(frontendPath, "index.html"), (error) => {
-    if (error) {
-      next(error);
-    }
+    if (error) next(error);
   });
 });
 
