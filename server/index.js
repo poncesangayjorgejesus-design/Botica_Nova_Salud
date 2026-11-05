@@ -2,28 +2,25 @@
 import "dotenv/config";
 import express from "express";
 
-// Rutas originales del integrante 2
 import productosRoutes from "./routes/productos.js";
 import asistenteRoutes from "./routes/asistente.js";
-
-// Nueva ruta del catalogo integrado
 import catalogoIntegradoRoutes from "./routes/catalogoIntegrado.js";
-
 import asistenteReactRoutes from "./routes/asistenteReact.js";
+import authRoutes from "./routes/auth.js";
+import adminRoutes from "./routes/admin.js";
+import metaRoutes from "./routes/meta.js";
+
+import movimientosRoutes from "./routes/movimientos.js";
+
+import pedidosRoutes from "./routes/pedidos.js";
+
+
 
 const app = express();
 
 const PORT = Number(process.env.PORT) || 3001;
 
-// ============================================
-// CONFIGURACION DEL SERVIDOR
-// ============================================
-
 app.use(express.json());
-
-// ============================================
-// COMPROBAR ESTADO DEL SERVIDOR
-// ============================================
 
 app.get("/api/health", (req, res) => {
   res.json({
@@ -33,30 +30,26 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// ============================================
-// RUTAS ORIGINALES
-// ============================================
-
-// API de productos del integrante 2
 app.use("/api/productos", productosRoutes);
-
-// Asistente inteligente
 app.use("/api/asistente", asistenteRoutes);
-
-// ============================================
-// RUTAS DE INTEGRACION
-// ============================================
-
-// Catalogo para la tienda React
 app.use("/api/products", catalogoIntegradoRoutes);
-
-// Asistente de inteligencia artificial para React
 app.use("/api/ai/symptoms", asistenteReactRoutes);
+// Autenticacion del panel administrativo
+app.use("/api/auth", authRoutes);
+// Panel administrativo protegido
+app.use("/api/admin", adminRoutes);
+
+// Categorias y presentaciones del catalogo
+app.use("/api/meta", metaRoutes);
+
+// Historial de movimientos administrativos
+app.use("/api/movements", movimientosRoutes);
+
+// Solicitudes de productos y pedidos administrativos
+app.use("/api/orders", pedidosRoutes);
 
 
-// ============================================
-// INICIAR SERVIDOR
-// ============================================
+
 
 app.listen(PORT, () => {
   console.log(
