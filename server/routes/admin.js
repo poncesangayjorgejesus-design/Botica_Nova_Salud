@@ -3,7 +3,11 @@ import express from "express";
 
 import {
   read,
-  enriched
+  write,
+  enriched,
+  transaction,
+  audit,
+  label
 } from "../store.js";
 
 import {
@@ -180,6 +184,159 @@ router.get("/stats", async (req, res) => {
 
     res.status(500).json({
       error: "No se pudieron cargar las estadísticas."
+    });
+  }
+});
+
+
+// ============================================
+// PATCH /api/admin/categories
+// RENOMBRAR CATEGORIA
+// ============================================
+
+router.patch("/categories", async (req, res) => {
+  try {
+    const anterior = label(req.body?.anterior);
+    const nuevo = label(req.body?.nuevo);
+
+    if (!anterior || !nuevo || nuevo.length > 100) {
+      return res.status(400).json({
+        error: "Debes proporcionar una categoría válida."
+      });
+    }
+
+    if (anterior === nuevo) {
+      return res.status(400).json({
+        error: "La nueva categoría debe ser diferente."
+      });
+    }
+
+    const resultado = await transaction(async () => {
+      const catalogo = await read("catalogo");
+
+      const existe = catalogo.some(
+        p => p.categoria === anterior
+      );
+
+      if (!existe) {
+        throw Object.assign(
+          new Error("La categoría original no existe."),
+          { status: 404 }
+        );
+      }
+
+      const duplicada = catalogo.some(
+        p => p.categoria === nuevo
+      );
+
+      if (duplicada) {
+        throw Object.assign(
+          new Error("Ya existe una categoría con ese nombre."),
+          { status: 409 }
+        );
+      }
+
+      for (const producto of catalogo) {
+        if (producto.categoria === anterior) {
+          producto.categoria = nuevo;
+        }
+      }
+
+      await write("catalogo", catalogo);
+
+      await audit(
+        "CATEGORIA RENOMBRADA",
+        `Categoría ${anterior} cambió a ${nuevo}`
+      );
+
+      return true;
+    });
+
+    res.json({
+      mensaje: "Categoría actualizada correctamente."
+    });
+
+  } catch (error) {
+    console.error("Error al renombrar categoría:", error);
+
+    res.status(error.status || 500).json({
+      error: error.message || "No se pudo actualizar la categoría."
+    });
+  }
+});
+
+// ============================================
+// PATCH /api/admin/presentations
+// RENOMBRAR PRESENTACION
+// ============================================
+
+router.patch("/presentations", async (req, res) => {
+  try {
+    const anterior = label(req.body?.anterior);
+    const nuevo = label(req.body?.nuevo);
+
+    if (!anterior || !nuevo || nuevo.length > 100) {
+      return res.status(400).json({
+        error: "Debes proporcionar una presentación válida."
+      });
+    }
+
+    if (anterior === nuevo) {
+      return res.status(400).json({
+        error: "La nueva presentación debe ser diferente."
+      });
+    }
+
+    const resultado = await transaction(async () => {
+      const catalogo = await read("catalogo");
+
+      const existe = catalogo.some(
+        p => p.forma === anterior
+      );
+
+      if (!existe) {
+        throw Object.assign(
+          new Error("La presentación original no existe."),
+          { status: 404 }
+        );
+      }
+
+      const duplicada = catalogo.some(
+        p => p.forma === nuevo
+      );
+
+      if (duplicada) {
+        throw Object.assign(
+          new Error("Ya existe una presentación con ese nombre."),
+          { status: 409 }
+        );
+      }
+
+      for (const producto of catalogo) {
+        if (producto.forma === anterior) {
+          producto.forma = nuevo;
+        }
+      }
+
+      await write("catalogo", catalogo);
+
+      await audit(
+        "PRESENTACION RENOMBRADA",
+        `Presentación ${anterior} cambió a ${nuevo}`
+      );
+
+      return true;
+    });
+
+    res.json({
+      mensaje: "Presentación actualizada correctamente."
+    });
+
+  } catch (error) {
+    console.error("Error al renombrar presentación:", error);
+
+    res.status(error.status || 500).json({
+      error: error.message || "No se pudo actualizar la presentación."
     });
   }
 });
