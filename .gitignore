@@ -21,3 +21,7 @@ npm-debug.log*
 # Archivos del sistema
 .DS_Store
 Thumbs.db
+
+# Respaldos de bases de datos
+backups/
+*.sql.bak
