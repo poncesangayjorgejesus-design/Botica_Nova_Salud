@@ -5,7 +5,6 @@
 **Institución:** SENATI  
 **Curso:** Fullstack Developer Software  
 **Equipo:** Jorge Ponce, Esteban Gonzalez, Cristhian Romero 
-**Versión documentada:** código del archivo `Botica_Nova_Salud(1).zip`  
 
 
 ## 1. Presentación y problema identificado
