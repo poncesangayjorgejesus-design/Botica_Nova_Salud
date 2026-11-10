@@ -1,0 +1,26 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {respond,emergency,selectProducts} from '../server/services/novaChat.js';
+const lot={id:'l',codigo:'TEST',cantidad:10,vencimiento:'2099-01-01'};
+const base={id:1,nombre:'Producto A',principio:'Principio A',categoria:'Analgésico',precio:4,visible:true,lotes:[lot],indicaciones:'Alivio del dolor dental',advertencias:'No duplicar el principio activo',contraindicaciones:'Alergia al principio activo',fuenteFarmacologica:'Ficha de prueba (no clínica)',estadoRevision:'Revisado',receta:'Venta libre'};
+const rx={...base,id:2,nombre:'Antibiótico prueba',categoria:'Antibióticos',receta:'Sujeto a receta',indicaciones:'Infecciones bacterianas según prescripción'};
+const chat=(text,prev=[])=>[...prev,{role:'user',content:text}];
+const run=(h,products=[base,rx],provider)=>respond(h,{readCatalog:async()=>products,provider});
+test('conversación local mantiene dolor dental tras respuesta breve y negación',async()=>{const h=chat('Me duele la mulela');const a=await run(h);const b=await run(chat('Desde ayer, no tengo fiebre ni hinchazón',[...h,{role:'assistant',content:a.message}]));assert.match(b.message,/dental/);assert.equal(b.products[0].id,1);const c=await run(chat('No tengo alergias',h));assert.match(c.message,/dental/)});
+test('no asocia tos negada',async()=>{assert.doesNotMatch((await run(chat('No tengo tos'))).message,/consulta sobre tos/)});
+test('antibióticos del catálogo se muestran como información con receta',async()=>{const r=await run(chat('¿Qué antibióticos hay?'));assert.equal(r.products.length,1);assert.equal(r.products[0].id,2);assert.equal(r.requiresPrescription,true);assert.equal(r.products[0].canRequest,false)});
+test('síntoma no deriva automáticamente en antibióticos',async()=>{const r=await run(chat('Desde ayer',chat('Me duele la muela')));assert.ok(!r.products.some(p=>p.id===2))});
+test('no ofrece ocultos, agotados, vencidos ni no revisados por síntomas',async()=>{const r=await run(chat('Desde ayer',chat('Me duele la muela')),[{...base,visible:false},{...base,id:3,lotes:[]},{...base,id:4,lotes:[{...lot,vencimiento:'2000-01-01'}]},{...base,id:5,estadoRevision:'Pendiente'}]);assert.deepEqual(r.products,[]);assert.match(r.message,/No encontré/)});
+test('ficha directa pendiente se informa sin autorizar solicitud',async()=>{const r=await run(chat('Información sobre Producto A'),[{...base,estadoRevision:'Pendiente'}]);assert.equal(r.products.length,1);assert.equal(r.products[0].canRequest,false)});
+test('urgencia prioriza atención y suprime productos',async()=>{const r=await run(chat('No tengo fiebre, pero no puedo respirar'));assert.equal(r.urgent,true);assert.deepEqual(r.products,[]);assert.match(r.message,/inmediata/)});
+test('negaciones de signos de alarma no activan urgencia',()=>{assert.equal(emergency('No tengo dificultad para respirar'),false);assert.equal(emergency('No tengo dolor en el pecho'),false);assert.equal(emergency('Tengo dolor en el pecho'),true)});
+test('urgencia se conserva en un seguimiento',async()=>{assert.equal((await run(chat('Estoy solo',chat('No puedo respirar')))).urgent,true)});
+function mockProvider(output){let calls=0;return {responses:{create:async body=>{assert.equal(body.store,false);assert.equal(body.text.format.strict,true);return ++calls===1?{output_text:JSON.stringify({terms:['dolor dental']})}:{output_text:JSON.stringify(output)}}}}};
+const reply={message:'Revisemos estas fichas.',followup:'¿Tienes alergias?',warnings:[],productIds:[1,999,2],urgent:false};
+test('OpenAI simulado: valida IDs, receta y devuelve precios del servidor',async()=>{const r=await run(chat('Me duele la muela'),[base,rx],mockProvider(reply));assert.equal(r.mode,'ia');assert.deepEqual(r.products.map(p=>p.id),[1]);assert.equal(r.products[0].precio,4)});
+test('proveedor falla: respuesta local explícita',async()=>{const r=await run(chat('Me duele la muela'),[base],{responses:{create:async()=>{throw Error('outage')}}});assert.equal(r.mode,'local');assert.match(r.notice,/limitado/)});
+test('JSON incompleto del proveedor activa respaldo',async()=>{assert.equal((await run(chat('Me duele la muela'),[base],mockProvider({message:'x'}))).mode,'local')});
+test('revalida stock después de la respuesta del proveedor',async()=>{let reads=0;const r=await respond(chat('Me duele la muela'),{provider:mockProvider(reply),readCatalog:async()=>++reads===1?[base]:[{...base,lotes:[]}]});assert.deepEqual(r.products,[])});
+
+test('antecedentes sensibles impiden sugerir fichas por síntomas',async()=>{const r=await run(chat('Estoy embarazada',chat('Me duele la muela')));assert.deepEqual(r.products,[]);assert.ok(r.warnings.some(x=>x.includes('antecedentes')))});
+test('medicamento explícito sigue visible pero sin solicitud ante embarazo',async()=>{const r=await run(chat('Información sobre Producto A',chat('Estoy embarazada')));assert.equal(r.products.length,1);assert.equal(r.products[0].canRequest,false)});
