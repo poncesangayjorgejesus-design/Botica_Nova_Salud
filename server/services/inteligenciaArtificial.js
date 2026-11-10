@@ -37,7 +37,7 @@ export const analizarConsultaIA = async (mensaje) => {
 
   const iaActiva = process.env.AI_ENABLED === "true";
   const apiKey = process.env.OPENAI_API_KEY?.trim();
-  const modelo = process.env.OPENAI_MODEL?.trim();
+  const modelo = process.env.OPENAI_MODEL?.trim() || process.env.NOVA_AI_MODEL?.trim() || 'gpt-4o-mini';
 
   if (!iaActiva || !apiKey || !modelo) {
     console.log("IA externa sin configurar. Usando respaldo local.");
