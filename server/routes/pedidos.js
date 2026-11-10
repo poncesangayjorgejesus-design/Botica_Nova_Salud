@@ -16,6 +16,7 @@ import {
   requerirSesionAdmin
 } from "./auth.js";
 
+import {needsPrescription} from '../services/clinical.js';
 const router = express.Router();
 
 // ============================================
@@ -285,13 +286,7 @@ router.patch(
               throw error;
             }
 
-            const necesitaReceta = pedido.items.some(
-              (item) =>
-                /receta/i.test(item.receta || "") &&
-                !/por verificar|verificar condición/i.test(
-                  item.receta || ""
-                )
-            );
+            const necesitaReceta = pedido.items.some(item=>needsPrescription(item)||needsPrescription(catalogo.find(p=>Number(p.id)===Number(item.id))||{}) );
 
             if (
               necesitaReceta &&
@@ -312,7 +307,7 @@ router.patch(
               );
 
               if (
-                !producto ||
+                !producto || producto.visible===false ||
                 !Number.isInteger(Number(item.qty)) ||
                 Number(item.qty) <= 0 ||
                 stock(producto) < Number(item.qty)
