@@ -6,9 +6,7 @@
 **Curso:** Fullstack Developer Software  
 **Equipo:** Jorge Ponce, Esteban Gonzalez, Cristhian Romero 
 **Versión documentada:** código del archivo `Botica_Nova_Salud(1).zip`  
-**Fecha de revisión:** 10 de noviembre de 2026
 
-> Proyecto académico: los pedidos, precios y entregas son de demostración. NOVA IA proporciona información general del catálogo; no realiza diagnósticos ni reemplaza la evaluación de un profesional de salud.
 
 ## 1. Presentación y problema identificado
 
