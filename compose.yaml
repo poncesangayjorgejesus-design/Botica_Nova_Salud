@@ -9,14 +9,16 @@ services:
       - "127.0.0.1:3000:3000"
 
     environment:
+      AI_ENABLED: ${AI_ENABLED:-false}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-6-luna}
       NODE_ENV: production
       NOVA_HOST: 0.0.0.0
       PORT: 3000
 
       NOVA_ADMIN_PASSWORD: ${NOVA_ADMIN_PASSWORD:?Define NOVA_ADMIN_PASSWORD en .env}
 
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      NOVA_AI_MODEL: ${NOVA_AI_MODEL:-gpt-4o-mini}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      NOVA_AI_MODEL: ${NOVA_AI_MODEL:-gpt-6-luna}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
 
       NOVA_STORAGE: mysql
