@@ -15,6 +15,7 @@ const pool=mysql.createPool({
   timezone:'Z'
 });
 
+export async function migrateClinical(){await pool.query(`CREATE TABLE IF NOT EXISTS producto_clinica (producto_id INT UNSIGNED PRIMARY KEY, datos JSON NOT NULL, CONSTRAINT fk_clinica_producto FOREIGN KEY (producto_id) REFERENCES productos(id)) ENGINE=InnoDB`);}
 const context=new AsyncLocalStorage();
 const executor=()=>context.getStore()||pool;
 const checkName=name=>{if(!['catalogo','pedidos','movimientos'].includes(name))throw new Error('Colección desconocida');};
@@ -32,6 +33,8 @@ export async function readMysql(name){
     const [lots]=await executor().query('SELECT id,producto_id,codigo,cantidad,vencimiento FROM lotes ORDER BY vencimiento,id');
     const byId=new Map(rows.map(r=>[r.id,{...r,visible:!!r.visible,imagen:r.imagen||'',lotes:[]} ]));
     for(const l of lots){const p=byId.get(l.producto_id);if(p)p.lotes.push({id:l.id,codigo:l.codigo,cantidad:l.cantidad,vencimiento:l.vencimiento});}
+    const [clinical]=await executor().query('SELECT producto_id,datos FROM producto_clinica');
+    for(const r of clinical){const p=byId.get(r.producto_id);if(p){const d=typeof r.datos==='string'?JSON.parse(r.datos):r.datos;for(const key of ['indicaciones','advertencias','contraindicaciones','fuenteFarmacologica','terminosBusqueda','estadoRevision','requiereReceta'])if(d[key]!==undefined)p[key]=d[key];}}
     return [...byId.values()];
   }
   if(name==='pedidos'){
@@ -50,6 +53,7 @@ export async function writeMysql(name,items){
     const fields=['id','nombre','principio','concentracion','forma','categoria','descripcion','imagen','precio','minimo','receta','origen','visible'];
     const updates=fields.filter(f=>f!=='id').map(f=>`\`${f}\`=VALUES(\`${f}\`)`).join(',');
     await sqlInsert('productos',fields,items.map(p=>({...p,imagen:p.imagen||'',origen:p.origen||'Datos académicos de prueba',visible:p.visible!==false?1:0})),updates);
+    await sqlInsert('producto_clinica',['producto_id','datos'],items.map(p=>({producto_id:p.id,datos:JSON.stringify(Object.fromEntries(['indicaciones','advertencias','contraindicaciones','fuenteFarmacologica','terminosBusqueda','estadoRevision','requiereReceta'].filter(k=>p[k]!==undefined).map(k=>[k,p[k]])))})),'datos=VALUES(datos)');
     await executor().query('DELETE FROM lotes');
     const lots=items.flatMap(p=>(p.lotes||[]).map(l=>({id:l.id,producto_id:p.id,codigo:l.codigo,cantidad:l.cantidad,vencimiento:l.vencimiento})));
     await sqlInsert('lotes',['id','producto_id','codigo','cantidad','vencimiento'],lots);
